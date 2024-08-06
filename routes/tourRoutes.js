@@ -1,22 +1,20 @@
 import express from 'express';
 
-import {
-  getAllTours,
-  createTour,
-  getTour,
-  updateTour,
-  deleteTour,
-} from '../controllers/tourController.js';
+import * as tourController from '../controllers/tourController.js';
 
 const router = express.Router();
 
-router.param('id', (req, res, next, val) => {
-  console.log(`Tour id is ${val}`);
+router.param('id', tourController.checkID);
 
-  next();
-});
+router
+  .route('/')
+  .get(tourController.getAllTours)
+  .post(tourController.checkBody, tourController.createTour);
 
-router.route('/').get(getAllTours).post(createTour);
-router.route('/:id').get(getTour).patch(updateTour).delete(deleteTour);
+router
+  .route('/:id')
+  .get(tourController.getTour)
+  .patch(tourController.updateTour)
+  .delete(tourController.deleteTour);
 
 export { router };

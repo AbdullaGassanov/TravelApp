@@ -9,6 +9,28 @@ const data = JSON.parse(
   })
 );
 
+export const checkBody = (req, res, next) => {
+  if (!req.body.name || !req.body.price)
+    return res.status(400).json({ message: 'in CHeck Body' });
+
+  console.log(`Our own middleware in Route Tours ♥ 🏀`);
+
+  next();
+};
+
+export const checkID = (req, res, next, val) => {
+  if (req.params.id * 1 < 0 || req.params.id * 1 > data.length) {
+    console.log(`Tours id is ${val}`);
+
+    return res.status(404).json({
+      status: 'fail',
+      message: `Invalid ID`,
+    });
+  }
+
+  next();
+};
+
 export const getAllTours = (req, res) => {
   res.status(200).json({
     status: 'success',
@@ -23,7 +45,7 @@ export const getAllTours = (req, res) => {
 export const getTour = (req, res) => {
   const id = +req.params.id;
 
-  const tour = data.find((el) => el.id == id);
+  const tour = data.find((el) => el.id === id);
 
   !tour
     ? res.status(404).json({ status: 'Error', message: 'Invalid ID' })

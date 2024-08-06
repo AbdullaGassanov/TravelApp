@@ -15,12 +15,10 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use((r, res, next) => {
-  r.requestTime = new Date().toISOString();
+app.use((req, res, next) => {
+  req.requestTime = new Date().toISOString();
   next();
 });
-
-/// All http methods
 
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/tours', tourRouter);
