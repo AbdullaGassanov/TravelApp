@@ -6,6 +6,8 @@ const router = express.Router();
 
 /* router.param('id', tourController.checkID); */
 
+console.log(router);
+
 router
   .route('/')
   .get(tourController.getAllTours)
