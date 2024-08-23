@@ -1,49 +1,33 @@
-import url from 'url';
 import { Tour } from './../models/tourModel.js';
-import { clear } from 'console';
-
-const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+import { APIFeature } from '../utils/apiFeatures.js';
 
 /// /api/v1/tours/ handlers  of routes
 
+export const aliasTop5Tours = function (req, res, next) {
+  req.query.fields = 'name,price,ratingAverage,summary,difficulty';
+  req.query.sort = '-ratingAverage,price';
+  req.query.limit = 5;
+
+  console.log(req.query);
+
+  next();
+};
+
 export const getAllTours = async (req, res) => {
   try {
-    /// Build Query
-
-    // 1A) Filtering
-
-    const queryObj = Object.assign({}, req.query);
-    const excludedFields = ['page', 'sort', 'limit', 'fields'];
-    excludedFields.forEach((field) => delete queryObj[field]);
-
-    // 1B) Advanced filtering
-
-    let queryString = JSON.stringify(queryObj);
-
-    queryString = JSON.parse(
-      queryString.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`),
-    );
-
-    let coreQuery = Tour.find(queryString).sort(queryObj);
-
-    // 2) Sort
-    if (req.query.sort) {
-      const sortBy = req.query.sort.split(',').join(' ');
-      coreQuery.sort(sortBy);
-    } else {
-      coreQuery = coreQuery.sort('-createdAt');
-    }
-
-    console.log(coreQuery.options);
-
     /// Execute Query
-    const allTours = await coreQuery;
+    const features = new APIFeature(Tour.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
+    const tours = await features.query;
 
     /// Send Response
     res.status(200).json({
-      results: allTours.length,
+      results: tours.length,
       status: 'success',
-      data: allTours,
+      data: tours,
     });
   } catch (err) {
     res.status(400).json({ status: 'Eroor get tours', message: err.message });
@@ -78,6 +62,7 @@ export const updateTour = async (req, res) => {
   try {
     const updateTour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
+      runValidators: true,
     });
 
     console.log(updateTour);
@@ -99,5 +84,86 @@ export const deleteTour = async (req, res) => {
     res
       .status(400)
       .json({ satus: 'error', message: `Not found ID ${err.message}` });
+  }
+};
+
+export const getTourStats = async (req, res) => {
+  try {
+    const stats = await Tour.aggregate([
+      {
+        $match: { ratingAverage: { $gte: 4.5 } },
+      },
+      {
+        $group: {
+          _id: { $toUpper: '$difficulty' },
+          numTours: { $sum: 1 },
+          numRatings: { $sum: '$ratingQuantity' },
+          avgRating: { $avg: '$ratingAverage' },
+          avgPrice: { $avg: '$price' },
+          minPrice: { $min: '$price' },
+          maxPrice: { $max: '$price' },
+        },
+      },
+      {
+        $sort: {
+          avgPrice: 1,
+        },
+      },
+      /* {
+        $match: { _id: { $ne: 'EASY' } },
+      }, */
+    ]);
+    res.status(200).json({ satus: 'successfuly', data: { stats } });
+  } catch (err) {
+    res.status(400).json({ satus: 'Error', message: `${err.message}` });
+  }
+};
+
+export const getMonthlyPlan = async (req, res) => {
+  try {
+    const year = +req.params.year;
+
+    const plan = await Tour.aggregate([
+      {
+        $unwind: '$startDates',
+      },
+      {
+        $match: {
+          startDates: {
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31`),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $month: `$startDates`,
+          },
+          numTourStarts: { $sum: 1 },
+          tours: { $push: '$name' },
+        },
+      },
+      {
+        $addFields: { month: `$_id` },
+      },
+      {
+        $project: {
+          _id: 0,
+        },
+      },
+      {
+        $sort: { numTourStarts: -1 },
+      },
+      {
+        $limit: 12,
+      },
+    ]);
+
+    res
+      .status(200)
+      .json({ length: plan.length, satus: 'successfuly', data: { plan } });
+  } catch (error) {
+    res.status(400).json({ satus: 'Error', message: `${error.message}` });
   }
 };

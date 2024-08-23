@@ -9,7 +9,7 @@ configDotenv();
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
-export const app = express();
+const app = express();
 
 // 1) Middlewares
 
@@ -25,14 +25,22 @@ app.get('/', (req, res) => {
 });
 
 app.use((req, res, next) => {
-  console.log(`Hello from the middleware 😁`);
-  next();
-});
-
-app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
   next();
 });
 
+// 2) Routes
+
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/tours', tourRouter);
+
+app.all('*', (req, res) => {
+  res.status(404).json({ message: `Coudn't find ${req.originalUrl} path` });
+});
+
+export { app };
+
+/* app.use((req, res, next) => {
+  console.log(`Hello from the middleware 😁`);
+  next();
+}); */
