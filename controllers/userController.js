@@ -4,7 +4,7 @@ import url from 'url';
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 const users = JSON.parse(
-  await fs.readFile(`${__dirname}/../dev-data/data/users.json`, 'utf-8')
+  await fs.readFile(`${__dirname}/../dev-data/data/users.json`, 'utf-8'),
 );
 
 export const getAllUsers = async (req, res) => {
@@ -30,7 +30,7 @@ export const createUser = async (req, res) => {
 
   fs.writeFile(
     `${__dirname}/../dev-data/data/users.json`,
-    JSON.stringify(users)
+    JSON.stringify(users),
   );
 
   res.status(200).json({
@@ -81,7 +81,7 @@ export const updateUser = async (req, res) => {
 
   fs.writeFile(
     `${__dirname}/../dev-data/data/users.json`,
-    JSON.stringify(users)
+    JSON.stringify(users),
   );
 
   res.status(200).json({
@@ -106,7 +106,7 @@ export const deleteUser = async (req, res) => {
 
   fs.writeFile(
     `${__dirname}/../dev-data/data/users.json`,
-    JSON.stringify(users)
+    JSON.stringify(users),
   );
 
   res.status(200).json({

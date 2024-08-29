@@ -4,6 +4,8 @@ import { router as tourRouter } from './routes/tourRoutes.js';
 import { router as userRouter } from './routes/userRoutes.js';
 import url from 'url';
 import { configDotenv } from 'dotenv';
+import { AppError } from './utils/appError.js';
+import { errFunc } from './controllers/errorController.js';
 
 configDotenv();
 
@@ -34,9 +36,17 @@ app.use((req, res, next) => {
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/tours', tourRouter);
 
-app.all('*', (req, res) => {
-  res.status(404).json({ message: `Coudn't find ${req.originalUrl} path` });
+app.all('*', (req, res, next) => {
+  /* const err = new Error(`Can't find ${req.originalUrl} path`);
+  err.status = 'fail';
+  err.statusCode = 404; */
+
+  next(new AppError(`Can't find ${req.originalUrl} path`, 404));
 });
+
+// Error handling middleware
+
+app.use(errFunc);
 
 export { app };
 
