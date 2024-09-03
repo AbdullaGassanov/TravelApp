@@ -1,5 +1,5 @@
 import express from 'express';
-
+import * as authController from '../controllers/authController.js';
 import * as tourController from '../controllers/tourController.js';
 
 const router = express.Router();
@@ -15,6 +15,10 @@ router
   .route('/:id')
   .get(tourController.getTour)
   .patch(tourController.updateTour)
-  .delete(tourController.deleteTour);
+  .delete(
+    authController.protect,
+    authController.restrictTo('admin', 'lead-guide'),
+    tourController.deleteTour,
+  );
 
 export { router };

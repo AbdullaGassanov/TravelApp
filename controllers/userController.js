@@ -1,5 +1,7 @@
 import fs from 'fs/promises';
 import url from 'url';
+import { User } from '../models/userModel.js';
+import { catchAsync } from '../utils/catchAsync.js';
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
@@ -7,17 +9,17 @@ const users = JSON.parse(
   await fs.readFile(`${__dirname}/../dev-data/data/users.json`, 'utf-8'),
 );
 
-export const getAllUsers = async (req, res) => {
-  const usersData = users;
+export const getAllUsers = catchAsync(async (req, res, next) => {
+  const users = await User.find();
 
   res.status(200).json({
     status: 'OK',
-    lengthL: usersData.length,
+    lengthL: users.length,
     message: {
-      users: usersData,
+      users,
     },
   });
-};
+});
 
 export const createUser = async (req, res) => {
   const userInfo = req.body;
